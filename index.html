@@ -1,709 +1,412 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ハムスターのスイカゲーム</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 5px;
-            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        
-        .game-container {
-            background: white;
-            border-radius: 4px;
-            padding: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 99vw;
-            max-height: 99vh;
-            overflow: hidden;
-        }
-        
-        .title {
-            color: #e17055;
-            font-size: 11px;
-            font-weight: bold;
-            margin-bottom: 1px;
-        }
-        
-        .score {
-            font-size: 8px;
-            color: #2d3436;
-            margin-bottom: 1px;
-        }
-        
-        #gameCanvas {
-            border: 1px solid #e17055;
-            border-radius: 2px;
-            background: #74b9ff;
-            display: block;
-            margin: 0 auto 1px;
-        }
-        
-        .controls {
-            margin-bottom: 1px;
-        }
-        
-        .btn {
-            background: #00b894;
-            color: white;
-            border: none;
-            padding: 2px 5px;
-            border-radius: 8px;
-            font-size: 9px;
-            cursor: pointer;
-            margin: 0 1px;
-            transition: all 0.3s;
-        }
-        
-        .btn:hover {
-            background: #00a085;
-            transform: translateY(-2px);
-        }
-        
-        /* モーダル */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-        }
-        
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .modal-header h2 {
-            color: #e17055;
-            margin: 0;
-            font-size: 20px;
-        }
-        
-        .close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: #e17055;
-        }
-        
-        .legend-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .legend-item-large {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        
-        .legend-circle-large {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            border: 2px solid #333;
-            flex-shrink: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐹 ハムスターのスイカゲーム（画像版）</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 5px;
+      background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .game-container {
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      text-align: center;
+      max-width: 99vw;
+      max-height: 99vh;
+      overflow: hidden;
+    }
+    .title {
+      color: #e17055;
+      font-size: 14px;
+      font-weight: 800;
+      margin: 0 0 4px;
+    }
+    .score {
+      font-size: 12px;
+      color: #2d3436;
+      margin-bottom: 4px;
+    }
+    #gameCanvas {
+      border: 1px solid #e17055;
+      border-radius: 4px;
+      background: #74b9ff;
+      display: block;
+      margin: 0 auto 4px;
+    }
+    .controls { margin-bottom: 6px; }
+    .btn {
+      background: #00b894;
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      cursor: pointer;
+      margin: 0 2px;
+      transition: transform .15s ease, background .15s ease;
+      user-select: none;
+    }
+    .btn:hover { background: #00a085; transform: translateY(-1px); }
+
+    /* モーダル */
+    .modal { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.7); }
+    .modal-content {
+      background: #fff; margin: 5% auto; padding: 16px; border-radius: 10px; width: 92%; max-width: 560px; max-height: 80vh; overflow: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .modal-header h2 { color: #e17055; margin: 0; font-size: 18px; }
+    .close { color: #999; font-size: 28px; font-weight: 700; cursor: pointer; }
+    .close:hover { color: #e17055; }
+    .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; }
+    .legend-thumb { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; background: #fff; }
+    .legend-name { font-size: 13px; }
+  </style>
 </head>
 <body>
-    <div class="game-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-            <h1 class="title" style="margin: 0;">🐹 ハムスターのスイカゲーム</h1>
-            <div>
-                <button class="btn" onclick="showLegend()" style="background: #6c5ce7; font-size: 7px; padding: 1px 3px;">📋</button>
-                <button class="btn" onclick="resetGame()" style="background: #e74c3c; font-size: 8px; padding: 2px 5px; color: white; font-weight: bold;">🔄 リセット</button>
-            </div>
-        </div>
-        <div class="score">スコア: <span id="score">0</span></div>
-        <canvas id="gameCanvas" width="350" height="380"></canvas>
-        <div class="controls">
-            <button class="btn" onclick="moveLeft()">← 左</button>
-            <button class="btn" onclick="drop()">⬇ ドロップ</button>
-            <button class="btn" onclick="moveRight()">→ 右</button>
-        </div>
+  <div class="game-container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;">
+      <h1 class="title">🐹 ハムスターのスイカゲーム（画像版）</h1>
+      <div>
+        <button class="btn" onclick="showLegend()" title="ハム一覧">📋 一覧</button>
+        <button class="btn" onclick="resetGame()" style="background:#e74c3c;">🔄 リセット</button>
+      </div>
     </div>
-    
-    <!-- モーダル -->
-    <div id="legendModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🐹 ハムスターの種類</h2>
-                <span class="close" onclick="hideLegend()">&times;</span>
-            </div>
-            <div class="legend-grid">
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #8B4513;"></div>
-                    <span>🐭 ドワーフハムスター</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #DEB887;"></div>
-                    <span>🐹 ロボロフスキー</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #FFD700;"></div>
-                    <span>🐹 キンクマ</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #A0522D;"></div>
-                    <span>🐹 ジャンガリアン</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #654321;"></div>
-                    <span>🐹 キャンベル</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #8B4513;"></div>
-                    <span>🐹 チャイニーズ</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #F5DEB3;"></div>
-                    <span>🐹 シリアン(クリーム)</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #FFFFFF; border: 2px solid #999;"></div>
-                    <span>🐹 シリアン(白)</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #FFA500;"></div>
-                    <span>🐹 ゴールデン</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #FF1493;"></div>
-                    <span>💖 レアハムスター</span>
-                </div>
-                <div class="legend-item-large">
-                    <div class="legend-circle-large" style="background: #8A2BE2;"></div>
-                    <span>⭐ 伝説のハムスター</span>
-                </div>
-            </div>
-        </div>
+    <div class="score">スコア: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="350" height="380"></canvas>
+    <div class="controls">
+      <button class="btn" onclick="moveLeft()">← 左</button>
+      <button class="btn" onclick="drop()">⬇ ドロップ</button>
+      <button class="btn" onclick="moveRight()">→ 右</button>
     </div>
+  </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        
-        // ゲーム設定
-        const gravity = 0.4;
-        const friction = 0.97;
-        const wallBounce = 0.6;
-        const groundBounce = 0.2;
-        
-        // ハムスターの種類（小さい順）
-        const foodTypes = [
-            { size: 15, color: '#DEB887', name: 'ドワーフハムスター', points: 1, shape: 'hamster', emoji: '🐭', hamsterColor: '#8B4513' },
-            { size: 20, color: '#F4A460', name: 'ロボロフスキー', points: 2, shape: 'hamster', emoji: '🐹', hamsterColor: '#DEB887' },
-            { size: 25, color: '#D2691E', name: 'キンクマ', points: 4, shape: 'hamster', emoji: '🐹', hamsterColor: '#FFD700' },
-            { size: 30, color: '#CD853F', name: 'ジャンガリアン', points: 8, shape: 'hamster', emoji: '🐹', hamsterColor: '#A0522D' },
-            { size: 35, color: '#8B4513', name: 'キャンベル', points: 16, shape: 'hamster', emoji: '🐹', hamsterColor: '#654321' },
-            { size: 40, color: '#A0522D', name: 'チャイニーズ', points: 32, shape: 'hamster', emoji: '🐹', hamsterColor: '#8B4513' },
-            { size: 45, color: '#FFE4B5', name: 'シリアン(クリーム)', points: 64, shape: 'hamster', emoji: '🐹', hamsterColor: '#F5DEB3' },
-            { size: 50, color: '#F5DEB3', name: 'シリアン(白)', points: 128, shape: 'hamster', emoji: '🐹', hamsterColor: '#FFFFFF' },
-            { size: 55, color: '#FFD700', name: 'ゴールデン', points: 256, shape: 'hamster', emoji: '🐹', hamsterColor: '#FFA500' },
-            { size: 60, color: '#FF69B4', name: 'レアハムスター', points: 512, shape: 'hamster', emoji: '🐹', hamsterColor: '#FF1493' },
-            { size: 65, color: '#9370DB', name: '伝説のハムスター', points: 1024, shape: 'hamster', emoji: '🐹', hamsterColor: '#8A2BE2' }
-        ];
-        
-        let gameState = {
-            balls: [],
-            currentBall: null,
-            nextBall: null,
-            score: 0,
-            dropX: canvas.width / 2,
-            gameOver: false
+  <!-- モーダル：ハムスター一覧 -->
+  <div id="legendModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🐹 ハムスターの種類（画像は ham1.png ～ ham11.png）</h2>
+        <span class="close" onclick="hideLegend()">&times;</span>
+      </div>
+      <div id="legendGrid" class="legend-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+
+    // ゲーム物理
+    const gravity = 0.4;
+    const friction = 0.97;
+    const wallBounce = 0.6;
+    const groundBounce = 0.2;
+
+    // ハムの段階（小→大）。画像ファイルは ham1.png ～ ham11.png を同じフォルダに置く。
+    // ※名前やポイントは任意。画像名は自動で割り当てるので配列を書き換えずに差し替え可能。
+    const foodTypes = [
+      { size: 15, points: 1,   name: 'ドワーフハムスター' },
+      { size: 20, points: 2,   name: 'ロボロフスキー' },
+      { size: 25, points: 4,   name: 'キンクマ' },
+      { size: 30, points: 8,   name: 'ジャンガリアン' },
+      { size: 35, points: 16,  name: 'キャンベル' },
+      { size: 40, points: 32,  name: 'チャイニーズ' },
+      { size: 45, points: 64,  name: 'シリアン(クリーム)' },
+      { size: 50, points: 128, name: 'シリアン(白)' },
+      { size: 55, points: 256, name: 'ゴールデン' },
+      { size: 60, points: 512, name: 'レアハムスター' },
+      { size: 65, points: 1024,name: '伝説のハムスター' },
+    ];
+
+    // 画像読み込み（ham1.png ～ ham11.png を自動割当）
+    const hamsterImages = {}; // index -> HTMLImageElement
+    const hamsterReady   = {}; // index -> boolean（読み込み成功）
+    let imagesLoaded = 0;
+    const totalImages = foodTypes.length;
+
+    function loadImages() {
+      for (let i = 0; i < foodTypes.length; i++) {
+        const img = new Image();
+        const filename = `ham${i + 1}.png`;
+        foodTypes[i].image = filename; // デバッグ/凡例表示用にもセット
+        img.onload = () => {
+          hamsterReady[i] = true;
+          imagesLoaded++;
+          // console.log(`Loaded: ${filename}`);
+          if (imagesLoaded === totalImages) buildLegend();
         };
-        
-        // 画像をロードする
-        const hamsterImages = {};
-        let imagesLoaded = 0;
-        const totalImages = foodTypes.length;
-        
-        function loadImages() {
-            foodTypes.forEach((type, index) => {
-                const img = new Image();
-                img.onload = function() {
-                    imagesLoaded++;
-                    if (imagesLoaded === totalImages) {
-                        console.log('All hamster images loaded!');
-                    }
-                };
-                img.onerror = function() {
-                    console.log(`Image ${type.image} not found, using shape instead`);
-                    imagesLoaded++;
-                };
-                img.src = type.image;
-                hamsterImages[index] = img;
-            });
+        img.onerror = () => {
+          hamsterReady[i] = false;
+          imagesLoaded++;
+          if (imagesLoaded === totalImages) buildLegend();
+          console.warn(`画像が見つかりません: ${filename}（この段はベクター描画で代替）`);
+        };
+        img.src = filename;
+        hamsterImages[i] = img;
+      }
+    }
+
+    // ゲーム状態
+    let gameState = {
+      balls: [],
+      currentBall: null,
+      nextBall: null,
+      score: 0,
+      dropX: canvas.width / 2,
+      gameOver: false,
+    };
+
+    class Ball {
+      constructor(x, y, type) {
+        this.x = x; this.y = y; this.vx = 0; this.vy = 0;
+        this.type = type;
+        this.radius = foodTypes[type].size;
+        this.points = foodTypes[type].points;
+        this.name = foodTypes[type].name;
+        this.merged = false;
+        this.dropTimer = 0;
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+      }
+      update() {
+        if (this.merged) return;
+        this.dropTimer++;
+        this.vy += gravity; // 重力
+        this.vx *= 0.999;   // 空気抵抗
+        this.vy *= 0.999;
+        this.rotationSpeed = this.vx * 0.05;
+        this.rotation += this.rotationSpeed;
+        this.rotationSpeed *= 0.95;
+        this.x += this.vx; this.y += this.vy;
+        // 左右の壁
+        if (this.x - this.radius < 0) {
+          this.x = this.radius; this.vx *= -wallBounce; this.vy += (Math.random() - .5);
         }
-        
-        class Ball {
-            constructor(x, y, type) {
-                this.x = x;
-                this.y = y;
-                this.vx = 0;
-                this.vy = 0;
-                this.type = type;
-                this.radius = foodTypes[type].size;
-                this.color = foodTypes[type].color;
-                this.points = foodTypes[type].points;
-                this.name = foodTypes[type].name;
-                this.shape = foodTypes[type].shape;
-                this.emoji = foodTypes[type].emoji;
-                this.hamsterColor = foodTypes[type].hamsterColor;
-                this.merged = false;
-                this.justDropped = true;
-                this.dropTimer = 0;
-                this.rotation = 0;
-                this.rotationSpeed = 0;
+        if (this.x + this.radius > canvas.width) {
+          this.x = canvas.width - this.radius; this.vx *= -wallBounce; this.vy += (Math.random() - .5);
+        }
+        // 底
+        if (this.y + this.radius > canvas.height) {
+          this.y = canvas.height - this.radius; this.vy *= -groundBounce; this.vx *= friction;
+          if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) this.vx += (Math.random() - 0.5) * 0.5;
+        }
+        this.checkCollisions();
+      }
+      checkCollisions() {
+        for (const other of gameState.balls) {
+          if (other === this || other.merged || this.merged) continue;
+          const dx = other.x - this.x, dy = other.y - this.y;
+          const distance = Math.hypot(dx, dy);
+          const minDistance = this.radius + other.radius;
+          if (distance < minDistance) {
+            if (this.type === other.type && this.type < foodTypes.length - 1) {
+              this.merge(other);
+            } else {
+              const overlap = minDistance - distance;
+              const nx = dx / (distance || 1), ny = dy / (distance || 1);
+              const sep = overlap * 0.6; // 分離
+              this.x -= nx * sep; this.y -= ny * sep;
+              other.x += nx * sep; other.y += ny * sep;
+              // 反発（単純化）
+              const rvx = other.vx - this.vx, rvy = other.vy - this.vy;
+              const impulse = (rvx * nx + rvy * ny) * 0.8;
+              this.vx += impulse * nx; this.vy += impulse * ny;
+              other.vx -= impulse * nx; other.vy -= impulse * ny;
             }
-            
-            update() {
-                if (this.merged) return;
-                
-                this.dropTimer++;
-                
-                this.vy += gravity;
-                this.vx *= 0.999;
-                this.vy *= 0.999;
-                
-                this.rotationSpeed = this.vx * 0.05;
-                this.rotation += this.rotationSpeed;
-                this.rotationSpeed *= 0.95;
-                
-                this.x += this.vx;
-                this.y += this.vy;
-                
-                if (this.x - this.radius < 0) {
-                    this.x = this.radius;
-                    this.vx *= -wallBounce;
-                    this.rotationSpeed += (Math.random() - 0.5) * 0.2;
-                    this.vy += Math.random() * 1 - 0.5;
-                }
-                if (this.x + this.radius > canvas.width) {
-                    this.x = canvas.width - this.radius;
-                    this.vx *= -wallBounce;
-                    this.rotationSpeed += (Math.random() - 0.5) * 0.2;
-                    this.vy += Math.random() * 1 - 0.5;
-                }
-                
-                if (this.y + this.radius > canvas.height) {
-                    this.y = canvas.height - this.radius;
-                    this.vy *= -groundBounce;
-                    this.vx *= friction;
-                    this.rotationSpeed += (Math.random() - 0.5) * 0.1;
-                    
-                    if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) {
-                        this.vx += (Math.random() - 0.5) * 0.5;
-                    }
-                }
-                
-                this.checkCollisions();
-            }
-            
-            checkCollisions() {
-                for (let other of gameState.balls) {
-                    if (other === this || other.merged || this.merged) continue;
-                    
-                    const dx = other.x - this.x;
-                    const dy = other.y - this.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = this.radius + other.radius;
-                    
-                    if (distance < minDistance) {
-                        if (this.type === other.type && this.type < foodTypes.length - 1) {
-                            this.merge(other);
-                        } else {
-                            const overlap = minDistance - distance;
-                            const separationX = (dx / distance) * overlap * 0.6;
-                            const separationY = (dy / distance) * overlap * 0.6;
-                            
-                            this.x -= separationX;
-                            this.y -= separationY;
-                            other.x += separationX;
-                            other.y += separationY;
-                            
-                            const relativeVx = other.vx - this.vx;
-                            const relativeVy = other.vy - this.vy;
-                            const impulse = (relativeVx * dx + relativeVy * dy) / (distance * distance) * 0.8;
-                            
-                            this.vx += impulse * dx;
-                            this.vy += impulse * dy;
-                            other.vx -= impulse * dx;
-                            other.vy -= impulse * dy;
-                            
-                            this.rotationSpeed += (Math.random() - 0.5) * 0.3;
-                            other.rotationSpeed += (Math.random() - 0.5) * 0.3;
-                            
-                            this.vx += (Math.random() - 0.5) * 1;
-                            this.vy += (Math.random() - 0.5) * 0.5;
-                            other.vx += (Math.random() - 0.5) * 1;
-                            other.vy += (Math.random() - 0.5) * 0.5;
-                        }
-                    }
-                }
-            }
-            
-            merge(other) {
-                const newType = this.type + 1;
-                const newX = (this.x + other.x) / 2;
-                const newY = (this.y + other.y) / 2;
-                
-                const newBall = new Ball(newX, newY, newType);
-                newBall.vy = -0.8; // 合体時の跳ね返りも最小に
-                newBall.vx = (Math.random() - 0.5) * 1; // 横方向も最小に
-                
-                this.merged = true;
-                other.merged = true;
-                
-                gameState.balls.push(newBall);
-                
-                gameState.score += newBall.points;
-                updateScore();
-            }
-            
-            draw() {
-                if (this.merged) return;
-                
-                ctx.save();
-                
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation);
-                
-                ctx.fillStyle = this.hamsterColor;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.radius * 0.8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                
-                this.drawHamsterFace();
-                
-                ctx.restore();
-            }
-            
-            drawHamsterFace() {
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(-this.radius * 0.3, -this.radius * 0.2, this.radius * 0.08, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(this.radius * 0.3, -this.radius * 0.2, this.radius * 0.08, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = '#FF69B4';
-                ctx.beginPath();
-                ctx.arc(0, this.radius * 0.1, this.radius * 0.04, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(0, this.radius * 0.2, this.radius * 0.15, 0, Math.PI);
-                ctx.stroke();
-                
-                ctx.fillStyle = this.hamsterColor;
-                ctx.strokeStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(-this.radius * 0.5, -this.radius * 0.6, this.radius * 0.2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.arc(this.radius * 0.5, -this.radius * 0.6, this.radius * 0.2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                
-                if (this.type === 10) {
-                    ctx.font = `${this.radius * 0.3}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillText('✨', -this.radius * 0.8, -this.radius * 0.8);
-                    ctx.fillText('✨', this.radius * 0.8, -this.radius * 0.8);
-                    ctx.fillText('⭐', 0, -this.radius * 1.0);
-                } else if (this.type === 9) {
-                    ctx.font = `${this.radius * 0.4}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#FF1493';
-                    ctx.fillText('💖', 0, -this.radius * 0.9);
-                }
-            }
+          }
         }
-        
-        function initGame() {
-            gameState.balls = [];
-            gameState.score = 0;
-            gameState.gameOver = false;
-            gameState.dropX = canvas.width / 2;
-            
-            gameState.currentBall = createRandomBall();
-            gameState.nextBall = createRandomBall();
-            
-            updateScore();
+      }
+      merge(other) {
+        const newType = this.type + 1;
+        const newX = (this.x + other.x) / 2;
+        const newY = (this.y + other.y) / 2;
+        const newBall = new Ball(newX, newY, newType);
+        newBall.vy = -0.8; newBall.vx = (Math.random() - 0.5) * 1;
+        this.merged = true; other.merged = true;
+        gameState.balls.push(newBall);
+        gameState.score += newBall.points; updateScore();
+      }
+      draw() {
+        if (this.merged) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        const r = this.radius;
+        const img = hamsterImages[this.type];
+        if (hamsterReady[this.type]) {
+          // 画像中心合わせで描画（正円相当の当たり判定なので正方形でOK）
+          ctx.drawImage(img, -r, -r, r * 2, r * 2);
+          // ふち取り（任意）
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(0,0,0,.15)';
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          // フォールバック：ベクター描画（画像が無い段だけ）
+          ctx.fillStyle = '#f1f2f6';
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(0, 0, r * 0.96, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          // 目・鼻
+          ctx.fillStyle = '#000';
+          ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.2, r * 0.08, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc( r * 0.3, -r * 0.2, r * 0.08, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ff6b81';
+          ctx.beginPath(); ctx.arc(0, r * 0.12, r * 0.05, 0, Math.PI * 2); ctx.fill();
         }
-        
-        function createRandomBall() {
-            const randomType = Math.floor(Math.random() * Math.min(5, foodTypes.length));
-            return { type: randomType };
+        ctx.restore();
+      }
+    }
+
+    function initGame() {
+      gameState.balls = [];
+      gameState.score = 0;
+      gameState.gameOver = false;
+      gameState.dropX = canvas.width / 2;
+      gameState.currentBall = createRandomBall();
+      gameState.nextBall = createRandomBall();
+      updateScore();
+    }
+
+    function createRandomBall() {
+      const randomType = Math.floor(Math.random() * Math.min(5, foodTypes.length));
+      return { type: randomType };
+    }
+
+    function gameLoop() {
+      ctx.fillStyle = '#74b9ff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (!gameState.gameOver) checkGameOver();
+      gameState.balls = gameState.balls.filter(b => !b.merged);
+      for (const b of gameState.balls) { b.update(); b.draw(); }
+      if (gameState.currentBall && !gameState.gameOver) drawPreviewBall();
+      if (gameState.gameOver) drawGameOver();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function drawPreviewBall() {
+      const t = gameState.currentBall.type;
+      const r = foodTypes[t].size;
+      const y = r + 10;
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.translate(gameState.dropX, y);
+      const img = hamsterImages[t];
+      if (hamsterReady[t]) {
+        ctx.drawImage(img, -r, -r, r * 2, r * 2);
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.96, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function checkGameOver() {
+      const topLine = 30;
+      for (const ball of gameState.balls) {
+        if (ball.y - ball.radius < topLine && ball.dropTimer > 120 && Math.abs(ball.vy) < 0.5 && Math.abs(ball.vx) < 0.5) {
+          gameState.gameOver = true; break;
         }
-        
-        function gameLoop() {
-            ctx.fillStyle = '#74b9ff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            if (!gameState.gameOver) {
-                checkGameOver();
-            }
-            
-            gameState.balls = gameState.balls.filter(ball => !ball.merged);
-            gameState.balls.forEach(ball => {
-                ball.update();
-                ball.draw();
-            });
-            
-            if (gameState.currentBall && !gameState.gameOver) {
-                drawPreviewBall();
-            }
-            
-            if (gameState.gameOver) {
-                drawGameOver();
-            }
-            
-            requestAnimationFrame(gameLoop);
+      }
+    }
+
+    function drawGameOver() {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,.8)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 24px system-ui, Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('ゲームオーバー!', canvas.width / 2, canvas.height / 2 - 30);
+      ctx.font = '16px system-ui, Arial';
+      ctx.fillText(`最終スコア: ${gameState.score} 点`, canvas.width / 2, canvas.height / 2 + 10);
+      ctx.font = '12px system-ui, Arial';
+      ctx.fillText('🔄 リセットで再開', canvas.width / 2, canvas.height / 2 + 36);
+      ctx.restore();
+    }
+
+    function updateScore() { scoreElement.textContent = gameState.score; }
+
+    function moveLeft() {
+      if (gameState.gameOver) return;
+      const r = foodTypes[gameState.currentBall.type].size;
+      gameState.dropX = Math.max(r, gameState.dropX - 30);
+    }
+    function moveRight() {
+      if (gameState.gameOver) return;
+      const r = foodTypes[gameState.currentBall.type].size;
+      gameState.dropX = Math.min(canvas.width - r, gameState.dropX + 30);
+    }
+    function drop() {
+      if (gameState.gameOver || !gameState.currentBall) return;
+      const t = gameState.currentBall.type;
+      const r = foodTypes[t].size;
+      const b = new Ball(gameState.dropX, r + 5, t);
+      gameState.balls.push(b);
+      gameState.currentBall = gameState.nextBall;
+      gameState.nextBall = createRandomBall();
+    }
+    function resetGame() { initGame(); }
+
+    function showLegend() { document.getElementById('legendModal').style.display = 'block'; }
+    function hideLegend() { document.getElementById('legendModal').style.display = 'none'; }
+
+    // 凡例生成（画像と名称を表示）
+    function buildLegend() {
+      const grid = document.getElementById('legendGrid');
+      grid.innerHTML = '';
+      foodTypes.forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        const img = document.createElement('img');
+        img.className = 'legend-thumb';
+        if (hamsterReady[i]) { img.src = t.image; img.alt = t.name; }
+        else {
+          // 画像が無い段は透明PNGっぽい見た目のダミー
+          img.style.background = 'repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/10px 10px';
+          img.alt = '画像なし';
         }
-        
-        function drawPreviewBall() {
-            const ball = gameState.currentBall;
-            const radius = foodTypes[ball.type].size;
-            const hamsterColor = foodTypes[ball.type].hamsterColor;
-            const shape = foodTypes[ball.type].shape;
-            
-            ctx.save();
-            ctx.globalAlpha = 0.7;
-            
-            const previewY = radius + 10;
-            
-            ctx.translate(gameState.dropX, previewY);
-            
-            // プレビューでも形状を反映
-            ctx.fillStyle = hamsterColor;
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            
-            switch(shape) {
-                case 'round':
-                case 'small':
-                    ctx.beginPath();
-                    ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    break;
-                case 'oval':
-                    ctx.save();
-                    ctx.scale(1.2, 0.8);
-                    ctx.beginPath();
-                    ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
-                    break;
-                case 'long':
-                    ctx.save();
-                    ctx.scale(1.4, 0.6);
-                    ctx.beginPath();
-                    ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
-                    break;
-                case 'heart':
-                    ctx.beginPath();
-                    ctx.moveTo(0, radius * 0.3);
-                    ctx.bezierCurveTo(-radius * 0.5, -radius * 0.3, -radius * 0.8, 0, 0, radius * 0.8);
-                    ctx.bezierCurveTo(radius * 0.8, 0, radius * 0.5, -radius * 0.3, 0, radius * 0.3);
-                    ctx.fill();
-                    ctx.stroke();
-                    break;
-                default:
-                    ctx.beginPath();
-                    ctx.arc(0, 0, radius * 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    break;
-            }
-            
-            // 顔を描画
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(-radius * 0.3, -radius * 0.2, radius * 0.08, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(radius * 0.3, -radius * 0.2, radius * 0.08, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#FF69B4';
-            ctx.beginPath();
-            ctx.arc(0, radius * 0.1, radius * 0.04, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.restore();
-        }
-        
-        function checkGameOver() {
-            const topLine = 30;
-            
-            for (let ball of gameState.balls) {
-                if (ball.y - ball.radius < topLine && 
-                    ball.dropTimer > 120 && 
-                    Math.abs(ball.vy) < 0.5 && 
-                    Math.abs(ball.vx) < 0.5) {
-                    
-                    gameState.gameOver = true;
-                    break;
-                }
-            }
-        }
-        
-        function drawGameOver() {
-            ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('ゲームオーバー!', canvas.width / 2, canvas.height / 2 - 30);
-            
-            ctx.font = '16px Arial';
-            ctx.fillText(`最終スコア: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 10);
-            
-            ctx.font = '12px Arial';
-            ctx.fillText('リセットボタンを押して再開', canvas.width / 2, canvas.height / 2 + 40);
-            
-            ctx.restore();
-        }
-        
-        function updateScore() {
-            scoreElement.textContent = gameState.score;
-        }
-        
-        function moveLeft() {
-            if (gameState.gameOver) return;
-            const ball = gameState.currentBall;
-            if (ball) {
-                const radius = foodTypes[ball.type].size;
-                gameState.dropX = Math.max(radius, gameState.dropX - 30);
-            }
-        }
-        
-        function moveRight() {
-            if (gameState.gameOver) return;
-            const ball = gameState.currentBall;
-            if (ball) {
-                const radius = foodTypes[ball.type].size;
-                gameState.dropX = Math.min(canvas.width - radius, gameState.dropX + 30);
-            }
-        }
-        
-        function drop() {
-            if (gameState.gameOver || !gameState.currentBall) return;
-            
-            const ball = gameState.currentBall;
-            const radius = foodTypes[ball.type].size;
-            const newBall = new Ball(gameState.dropX, radius + 5, ball.type);
-            
-            gameState.balls.push(newBall);
-            gameState.currentBall = gameState.nextBall;
-            gameState.nextBall = createRandomBall();
-        }
-        
-        function resetGame() {
-            initGame();
-        }
-        
-        function showLegend() {
-            document.getElementById('legendModal').style.display = 'block';
-        }
-        
-        function hideLegend() {
-            document.getElementById('legendModal').style.display = 'none';
-        }
-        
-        window.onclick = function(event) {
-            const modal = document.getElementById('legendModal');
-            if (event.target == modal) {
-                hideLegend();
-            }
-        }
-        
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'a':
-                case 'A':
-                    moveLeft();
-                    break;
-                case 'ArrowRight':
-                case 'd':
-                case 'D':
-                    moveRight();
-                    break;
-                case 'ArrowDown':
-                case ' ':
-                case 's':
-                case 'S':
-                    drop();
-                    break;
-                case 'r':
-                case 'R':
-                    resetGame();
-                    break;
-            }
-        });
-        
-        // ゲーム開始時に画像をロード
-        loadImages();
-        initGame();
-        gameLoop();
-    </script>
+        const span = document.createElement('span');
+        span.className = 'legend-name';
+        span.textContent = `${i+1}. ${t.name}`;
+        item.appendChild(img);
+        item.appendChild(span);
+        grid.appendChild(item);
+      });
+    }
+
+    // キー操作
+    document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowLeft': case 'a': case 'A': moveLeft(); break;
+        case 'ArrowRight': case 'd': case 'D': moveRight(); break;
+        case 'ArrowDown': case ' ': case 's': case 'S': drop(); break;
+        case 'r': case 'R': resetGame(); break;
+      }
+    });
+
+    // 起動
+    loadImages();
+    initGame();
+    gameLoop();
+  </script>
 </body>
 </html>
