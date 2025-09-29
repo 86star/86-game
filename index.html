@@ -205,12 +205,12 @@
 
 
 <style>
-/* Portrait frame that keeps vertical layout even in landscape */
+/* Portrait frame to keep vertical look even in landscape */
 #portraitFrame {
   position: relative;
   margin: 0 auto;
   width: 100%;
-  max-width: 540px; /* upper bound for readability */
+  max-width: 540px;
   height: 100vh;
   overflow: hidden;
 }
@@ -218,17 +218,8 @@
   transform-origin: top center;
   will-change: transform;
 }
-/* Center on ultra-wide screens */
-html, body {
-  height: 100%;
-  overscroll-behavior: none;
-}
-body {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-}
-/* Avoid double scroll on mobile chrome */
+html, body { height: 100%; overscroll-behavior: none; }
+body { display: flex; justify-content: center; align-items: stretch; }
 * { -webkit-tap-highlight-color: rgba(0,0,0,0); }
 </style>
 
@@ -236,6 +227,36 @@ body {
 <body>
 <div id="playtimeHud" aria-hidden="true"></div>
 
+
+
+<script>
+// ===== Global Asset Version Patch =====
+(function(){
+  const ASSET_VER = "v20250930a"; // bump this to force reload
+  function addVer(u){
+    try{
+      if (typeof u === 'string' && u.indexOf('assets/') !== -1 && /\.png(\?.*)?$/.test(u)){
+        const sep = u.indexOf('?') === -1 ? '?' : '&';
+        return u + sep + ASSET_VER;
+      }
+    }catch(e){}
+    return u;
+  }
+  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if (desc && !HTMLImageElement.prototype.__patchedForAssetVer){
+    HTMLImageElement.prototype.__patchedForAssetVer = true;
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+      get: desc.get,
+      set: function(v){ desc.set.call(this, addVer(v)); },
+      configurable: true,
+      enumerable: true
+    });
+  }
+  // Also patch Image() constructor return (rare older engines)
+  const OrigImage = window.Image;
+  window.Image = function(w,h){ return new OrigImage(w,h); };
+})();
+</script>
 
 <script id="shim-showhelp-once">
 (function(){
@@ -1520,8 +1541,6 @@ function createToggleSection(titleText, initiallyOpen, itemsRenderer) {
     }
 
 function startGame() {
-  try{safeStopAutoRepeat();}catch(e){}
-
   try{ startPlayTimer && startPlayTimer(); }catch(e){}
   gameState.gameStarted = true;
       sessionEraserUsed = false;
@@ -1718,7 +1737,7 @@ function startGame() {
       
       for (const ball of gameState.balls) {
         if (ball.y - ball.radius < gameOverLine && ball.dropTimer > 60) {
-          gameState.gameOver = true; try{safeStopAutoRepeat();}catch(e){};
+          gameState.gameOver = true;
           break;
         }
       }
@@ -1815,7 +1834,6 @@ function togglePause() {
   if (gameState.paused) {
     // 一時停止開始
     titleStats.pauseStartTime = Date.now();
-    try{safeStopAutoRepeat();}catch(e){};
     pauseBtn.innerHTML = '▶️ 再開';
     pauseBtn.title = '一時停止を解除して再開';
   } else {
@@ -2080,8 +2098,6 @@ function getActualPlayTime() {
     }
     
     function resetGame() {
-  try{safeStopAutoRepeat();}catch(e){}
-
   try{ stopPlayTimer && stopPlayTimer(); }catch(e){} 
       // リセット前に時間記録を更新
       if (gameState.gameStarted && titleStats.gameStartTime > 0) {
@@ -2116,9 +2132,7 @@ function getActualPlayTime() {
   gameLoop();
 }
 
-    function showLegend() {
-  try{safeStopAutoRepeat();}catch(e){}
- 
+    function showLegend() { 
       buildLegend();
       document.getElementById('legendModal').style.display = 'block';
       resizeGame(); 
@@ -2129,9 +2143,7 @@ function getActualPlayTime() {
       resizeGame(); 
     }
 
-    function showHelp() {
-  try{safeStopAutoRepeat();}catch(e){}
- 
+    function showHelp() { 
       document.getElementById('helpModal').style.display = 'block'; 
     }
     
@@ -3147,29 +3159,13 @@ document.addEventListener('keydown', function(e){
 
 
 <script>
-// --- Safety helper: stop long-press auto-repeat when game state changes or tab hides ---
-function safeStopAutoRepeat(){
-  try{ if (window.__autoRepeat && typeof window.__autoRepeat.stop === 'function') window.__autoRepeat.stop(); }catch(e){}
-}
-document.addEventListener('visibilitychange', function(){
-  if (document.hidden){
-    try{ safeStopAutoRepeat(); }catch(e){}
-  }
-}, {passive:true});
-</script>
-
-
-<script>
-// --- Visual Portrait Keeper v12 ---
+// --- Visual Portrait Keeper v12 + Desktop-safe ---
 (function(){
-  // Build wrapper once
   if (!document.getElementById('portraitFrame')){
     const frame = document.createElement('div');
     frame.id = 'portraitFrame';
     const content = document.createElement('div');
     content.id = 'portraitContent';
-
-    // Move existing body children into content
     const kids = Array.from(document.body.childNodes);
     kids.forEach(n => content.appendChild(n));
     frame.appendChild(content);
@@ -3178,33 +3174,35 @@ document.addEventListener('visibilitychange', function(){
   const frame = document.getElementById('portraitFrame');
   const content = document.getElementById('portraitContent');
 
-  function layout(){
-    // Reset scale to measure natural size
-    content.style.transform = 'scale(1)';
-    // Natural size = content's bounding box
-    const natural = content.getBoundingClientRect();
-    // Frame target size: keep portrait look
+  function layout(){ 
+    // Desktop-safe: on pointer: fine and wide viewport, don't scale—center only.
+    const isDesktop = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
     const vw = window.innerWidth, vh = window.innerHeight;
-    // Aim for portrait aspect; use height as the limiting side
+    if (isDesktop && vw >= 900){
+      frame.style.width  = Math.min(720, vw * 0.9) + 'px';
+      frame.style.height = vh + 'px';
+      content.style.transform = 'scale(1)';
+      return;
+    }
+    // Reset scale to measure
+    content.style.transform = 'scale(1)';
+    const natural = content.getBoundingClientRect();
+    const portraitRatio = 9/16;
     let targetH = vh;
-    let targetW = Math.min(vw, Math.floor(vh * 9 / 16));
-    if (vw < vh){ // already portrait-ish, allow wider within max-width
+    let targetW = Math.min(vw, Math.floor(vh * portraitRatio));
+    if (vw < vh){
       targetW = Math.min(vw, 540);
       targetH = vh;
     }
     frame.style.width = targetW + 'px';
     frame.style.height = targetH + 'px';
-
-    // Compute scale to fit content inside frame
     const scaleX = targetW / Math.max(1, natural.width);
     const scaleY = targetH / Math.max(1, natural.height);
     const scale = Math.min(scaleX, scaleY);
     content.style.transform = 'scale(' + scale + ')';
   }
-
   window.addEventListener('resize', layout, {passive:true});
   document.addEventListener('DOMContentLoaded', layout, {passive:true});
-  // In case this script runs after DOMContentLoaded
   setTimeout(layout, 0);
 })();
 </script>
