@@ -204,35 +204,8 @@
 </style>
 
 
-<style>
-/* Portrait frame to keep vertical look even in landscape */
-#portraitFrame {
-  position: relative;
-  margin: 0 auto;
-  width: 100%;
-  max-width: 540px;
-  height: 100vh;
-  overflow: hidden;
-}
-#portraitContent {
-  transform-origin: top center;
-  will-change: transform;
-}
-html, body { height: 100%; overscroll-behavior: none; }
-body { display: flex; justify-content: center; align-items: stretch; }
-* { -webkit-tap-highlight-color: rgba(0,0,0,0); }
-</style>
-
-</head>
-<body>
-<div id="playtimeHud" aria-hidden="true"></div>
-
-
-
 <script>
-
-<script>
-// ===== Global Asset Version Patch (v15, version-managed) =====
+// ===== Asset Version (v15) =====
 (function(){
   function getQueryVer(){
     try{
@@ -240,51 +213,22 @@ body { display: flex; justify-content: center; align-items: stretch; }
       return m ? decodeURIComponent(m[1]) : null;
     }catch(e){ return null; }
   }
-
-  // ← ここを更新時だけ 'v1.0.1' などに変える
-  const ASSET_VER = getQueryVer() || 'v1.0.1';
-
-  function addVer(u){
+  // 更新時だけ 'v1.0.1' などに変更してください
+  window.ASSET_VER = getQueryVer() || 'v1.0.0';
+  window.withVer = function(u){
     try{
-      if (typeof u === 'string' && u.indexOf('assets/') !== -1 && /(\.png|\.jpg|\.jpeg|\.webp)(\?.*)?$/.test(u)){
-        const sep = u.indexOf('?') === -1 ? '?' : '&';
-        return u + sep + 'cb=' + ASSET_VER;
-      }
-    }catch(e){}
-    return u;
-  }
-  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-  if (desc && !HTMLImageElement.prototype.__patchedForAssetVer){
-    HTMLImageElement.prototype.__patchedForAssetVer = true;
-    Object.defineProperty(HTMLImageElement.prototype, 'src', {
-      get: desc.get,
-      set: function(v){ desc.set.call(this, addVer(v)); },
-      configurable: true,
-      enumerable: true
-    });
-  }
-
-  function patchBgUrl(el){
-    try{
-      const bg = el.style && el.style.backgroundImage;
-      if (bg && bg.includes('assets/')){
-        el.style.backgroundImage = bg.replace(/url\((['\"]?)([^)]+)\1\)/g, function(m,q,url){ return 'url(' + addVer(url) + ')'; });
-      }
-    }catch(e){}
-  }
-  const mo = new MutationObserver(function(muts){
-    muts.forEach(function(mu){
-      if (mu.type === 'attributes' && mu.attributeName === 'style') patchBgUrl(mu.target);
-      (mu.addedNodes||[]).forEach(function(n){ if (n.nodeType===1) patchBgUrl(n); });
-    });
-  });
-  mo.observe(document.documentElement, { attributes:true, attributeFilter:['style'], subtree:true, childList:true });
-
-  document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('[style*="background-image"]').forEach(patchBgUrl);
-  }, {once:true});
+      if (typeof u !== 'string') return u;
+      if (!/\.(png|jpg|jpeg|webp|gif)$/i.test(u)) return u;
+      const sep = u.includes('?') ? '&' : '?';
+      return u + sep + 'v=' + ASSET_VER;
+    }catch(e){ return u; }
+  };
 })();
 </script>
+
+</head>
+<body>
+<div id="playtimeHud" aria-hidden="true"></div>
 
 
 <script id="shim-showhelp-once">
@@ -718,7 +662,7 @@ function renderScore(){
         (newB < 255 ? newB : 255).toString(16).padStart(2, '0');
     }
 
-    function drawFallbackHamster(ctx, type, radius) {
+    function drawHamster(ctx, type, radius) {
       const color = hamsterColors[type] || '#FFB6C1';
       
       const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
@@ -809,7 +753,7 @@ function renderScore(){
       
       nextCtx.save();
       nextCtx.translate(nextCanvas.width / 2, nextCanvas.height / 2);
-      drawFallbackHamster(nextCtx, t, r);
+      drawHamster(nextCtx, t, r);
       nextCtx.restore();
     }
 
@@ -1038,7 +982,7 @@ if (titleStats.gameStartTime > 0) {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
-        drawFallbackHamster(ctx, this.type, this.radius);
+        drawHamster(ctx, this.type, this.radius);
         ctx.restore();
       }
     }
@@ -1701,7 +1645,7 @@ function startGame() {
       
       ctx.translate(centerX, centerY);
       const mainRadius = Math.min(48, canvas.width * 0.12);
-      drawFallbackHamster(ctx, 7, mainRadius);
+      drawHamster(ctx, 7, mainRadius);
       
       for (let i = 0; i < 5; i++) {
         const angle = (i * Math.PI * 2 / 5) + Date.now() * 0.001;
@@ -1712,7 +1656,7 @@ function startGame() {
         
         ctx.save();
         ctx.translate(x, y);
-        drawFallbackHamster(ctx, i, smallRadius);
+        drawHamster(ctx, i, smallRadius);
         ctx.restore();
       }
       
@@ -1748,7 +1692,7 @@ function startGame() {
       ctx.save();
       ctx.globalAlpha = 0.75;
       ctx.translate(gameState.dropX, y);
-      drawFallbackHamster(ctx, t, r);
+      drawHamster(ctx, t, r);
       ctx.restore();
     }
 
@@ -2062,7 +2006,7 @@ function getActualPlayTime() {
         
         ctx.save();
         ctx.translate(16, 16);
-        drawFallbackHamster(ctx, i, 14);
+        drawHamster(ctx, i, 14);
         ctx.restore();
         
         const span = document.createElement('span');
@@ -3188,64 +3132,42 @@ document.addEventListener('keydown', function(e){
 
 
 <script>
-// --- Visual Portrait Keeper v12 + Desktop-safe ---
+// ===== Hamster sprites (v17) =====
 (function(){
-  if (!document.getElementById('portraitFrame')){
-    const frame = document.createElement('div');
-    frame.id = 'portraitFrame';
-    const content = document.createElement('div');
-    content.id = 'portraitContent';
-    const kids = Array.from(document.body.childNodes);
-    kids.forEach(n => content.appendChild(n));
-    frame.appendChild(content);
-    document.body.appendChild(frame);
-  }
-  const frame = document.getElementById('portraitFrame');
-  const content = document.getElementById('portraitContent');
+  const HAM_COUNT = 11; // ham_01..ham_11
+  window.hamsterImg = new Array(HAM_COUNT+1).fill(null);
+  window.hamsterImgLoaded = new Array(HAM_COUNT+1).fill(false);
 
-  function layout(){ 
-    // Desktop-safe: on pointer: fine and wide viewport, don't scale—center only.
-    const isDesktop = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    if (isDesktop && vw >= 900){
-      frame.style.width  = Math.min(720, vw * 0.9) + 'px';
-      frame.style.height = vh + 'px';
-      content.style.transform = 'scale(1)';
-      return;
-    }
-    // Reset scale to measure
-    content.style.transform = 'scale(1)';
-    const natural = content.getBoundingClientRect();
-    const portraitRatio = 9/16;
-    let targetH = vh;
-    let targetW = Math.min(vw, Math.floor(vh * portraitRatio));
-    if (vw < vh){
-      targetW = Math.min(vw, 540);
-      targetH = vh;
-    }
-    frame.style.width = targetW + 'px';
-    frame.style.height = targetH + 'px';
-    const scaleX = targetW / Math.max(1, natural.width);
-    const scaleY = targetH / Math.max(1, natural.height);
-    const scale = Math.min(scaleX, scaleY);
-    content.style.transform = 'scale(' + scale + ')';
+  function srcFor(i){
+    const id = String(i).padStart(2,'0');
+    return withVer(`assets/ham_${id}.png`);
   }
-  window.addEventListener('resize', layout, {passive:true});
-  document.addEventListener('DOMContentLoaded', layout, {passive:true});
-  setTimeout(layout, 0);
+
+  function preload(){
+    for (let i=1;i<=HAM_COUNT;i++){
+      const img = new Image();
+      img.onload  = ()=> hamsterImgLoaded[i] = true;
+      img.onerror = ()=> hamsterImgLoaded[i] = false;
+      img.src = srcFor(i);
+      hamsterImg[i] = img;
+    }
+  }
+  preload();
+
+  // 画像があれば drawImage、無ければ従来のベクター描画へフォールバック
+  window.drawHamster = function(ctx, type, radius){
+    const t = Math.max(1, Math.min(HAM_COUNT, (type|0)));
+    if (hamsterImgLoaded[t]){
+      const img = hamsterImg[t];
+      const d = radius * 2;
+      ctx.drawImage(img, -radius, -radius, d, d); // 中心基準で描画
+    } else if (typeof drawFallbackHamster === 'function'){
+      drawHamster(ctx, type, radius);
+    }
+  };
 })();
 </script>
 
-
-<script>
-window.__unregSW = async function(){
-  if ('serviceWorker' in navigator){
-    const regs = await navigator.serviceWorker.getRegistrations();
-    for (const r of regs){ try{ await r.unregister(); }catch(e){} }
-    console.log('[SW] unregistered. Reload now.');
-  }
-};
-</script>
 </body>
 </html>
 <script>(function(){var hud=document.getElementById('playtimeHud'); if(hud) hud.style.display='none';})();</script>
