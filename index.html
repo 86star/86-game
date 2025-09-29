@@ -230,14 +230,25 @@ body { display: flex; justify-content: center; align-items: stretch; }
 
 
 <script>
-// ===== Global Asset Version Patch =====
+
+<script>
+// ===== Global Asset Version Patch (v15, version-managed) =====
 (function(){
-  const ASSET_VER = "v20250930a"; // bump this to force reload
+  function getQueryVer(){
+    try{
+      const m = location.search.match(/[?&](?:ver|v|cb)=([^&]+)/i);
+      return m ? decodeURIComponent(m[1]) : null;
+    }catch(e){ return null; }
+  }
+
+  // ← ここを更新時だけ 'v1.0.1' などに変える
+  const ASSET_VER = getQueryVer() || 'v1.0.0';
+
   function addVer(u){
     try{
-      if (typeof u === 'string' && u.indexOf('assets/') !== -1 && /\.png(\?.*)?$/.test(u)){
+      if (typeof u === 'string' && u.indexOf('assets/') !== -1 && /(\.png|\.jpg|\.jpeg|\.webp)(\?.*)?$/.test(u)){
         const sep = u.indexOf('?') === -1 ? '?' : '&';
-        return u + sep + ASSET_VER;
+        return u + sep + 'cb=' + ASSET_VER;
       }
     }catch(e){}
     return u;
@@ -252,11 +263,29 @@ body { display: flex; justify-content: center; align-items: stretch; }
       enumerable: true
     });
   }
-  // Also patch Image() constructor return (rare older engines)
-  const OrigImage = window.Image;
-  window.Image = function(w,h){ return new OrigImage(w,h); };
+
+  function patchBgUrl(el){
+    try{
+      const bg = el.style && el.style.backgroundImage;
+      if (bg && bg.includes('assets/')){
+        el.style.backgroundImage = bg.replace(/url\((['\"]?)([^)]+)\1\)/g, function(m,q,url){ return 'url(' + addVer(url) + ')'; });
+      }
+    }catch(e){}
+  }
+  const mo = new MutationObserver(function(muts){
+    muts.forEach(function(mu){
+      if (mu.type === 'attributes' && mu.attributeName === 'style') patchBgUrl(mu.target);
+      (mu.addedNodes||[]).forEach(function(n){ if (n.nodeType===1) patchBgUrl(n); });
+    });
+  });
+  mo.observe(document.documentElement, { attributes:true, attributeFilter:['style'], subtree:true, childList:true });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('[style*="background-image"]').forEach(patchBgUrl);
+  }, {once:true});
 })();
 </script>
+
 
 <script id="shim-showhelp-once">
 (function(){
@@ -3207,6 +3236,16 @@ document.addEventListener('keydown', function(e){
 })();
 </script>
 
+
+<script>
+window.__unregSW = async function(){
+  if ('serviceWorker' in navigator){
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const r of regs){ try{ await r.unregister(); }catch(e){} }
+    console.log('[SW] unregistered. Reload now.');
+  }
+};
+</script>
 </body>
 </html>
 <script>(function(){var hud=document.getElementById('playtimeHud'); if(hud) hud.style.display='none';})();</script>
