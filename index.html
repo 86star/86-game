@@ -225,6 +225,11 @@
   };
 })();
 </script>
+<!-- PWA: manifest & iOS icon -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 </head>
 <body>
@@ -294,10 +299,13 @@ function stopPlayTimer(){
         <div style="font-size: 12px; font-weight: bold; color: #e17055;">NEXT:</div>
         <div id="nextPreview" style="width: 50px; height: 50px; border: 2px solid #e17055; border-radius: 6px; background: #74b9ff; display: flex; align-items: center; justify-content: center;">
         </div>
-        <div class="item-slot" onclick="useEraser()" id="item-eraser">
-          <div style="font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: linear-gradient(45deg, #ff6b6b, #ee5a52);">🧹</div>
-          <div style="font-size: 9px; font-weight: bold; color: #2d3436;">×<span id="eraser-count">2</span></div>
-        </div>
+<div class="item-slot" onclick="useEraser()" id="item-eraser">
+  <img src="assets/eraser.png" 
+       alt="eraser" 
+       style="width:24px; height:24px; border-radius:4px; object-fit:contain;" />
+  <div style="font-size: 9px; font-weight: bold; color: #2d3436;">×<span id="eraser-count">2</span></div>
+</div>
+
       </div>
       <canvas id="gameCanvas" width="350" height="380"></canvas>
 <div id="promoLinks" style="text-align:center; margin:12px 0 0;">
@@ -3155,19 +3163,108 @@ document.addEventListener('keydown', function(e){
   preload();
 
   // 画像があれば drawImage、無ければ従来のベクター描画へフォールバック
-  window.drawHamster = function(ctx, type, radius){
-    const t = Math.max(1, Math.min(HAM_COUNT, (type|0)));
-    if (hamsterImgLoaded[t]){
-      const img = hamsterImg[t];
-      const d = radius * 2;
-      ctx.drawImage(img, -radius, -radius, d, d); // 中心基準で描画
-    } else if (typeof drawFallbackHamster === 'function'){
-      drawHamster(ctx, type, radius);
-    }
-  };
+window.drawHamster = function(ctx, type, radius){
+  // ★ ここがポイント：ゲーム内 type は 0 始まりなので +1 する
+  const idx = ((type|0) + 1);
+  const t = Math.max(1, Math.min(HAM_COUNT, idx));
+
+  if (hamsterImgLoaded[t]){
+    const img = hamsterImg[t];
+    const d = radius * 2;
+    ctx.drawImage(img, -radius, -radius, d, d); // 中心基準
+  } else if (typeof drawFallbackHamster === 'function'){
+    drawFallbackHamster(ctx, type, radius);
+  }
+};
 })();
 </script>
+<script>
+// === eraser sprite ===
+const eraserImg = new Image();
+let eraserImgLoaded = false;
+eraserImg.onload  = ()=> eraserImgLoaded = true;
+eraserImg.onerror = ()=> eraserImgLoaded = false;
+// 画像のバージョン付与ユーティリティがある場合（withVer/ASSET_VER）使う
+if (typeof withVer === 'function') {
+  eraserImg.src = withVer("assets/eraser.png");
+} else {
+  eraserImg.src = "assets/eraser.png";
+}
 
+// 消しゴムを半径radiusで中心描画（ハムと同じ基準）
+window.drawEraser = function(ctx, radius){
+  if (eraserImgLoaded) {
+    const d = radius * 2;
+    ctx.drawImage(eraserImg, -radius, -radius, d, d);
+  } else {
+    // フォールバック（読めない時は赤い四角や鉛筆など、元の描画を残してOK）
+    ctx.fillStyle = "#e74c3c";
+    ctx.fillRect(-radius, -radius, radius*2, radius*2);
+  }
+};
+</script>
+<script>
+// --- PWA install controller (replace your current block) ---
+if ('serviceWorker' in navigator) {
+  // まだならSW登録（必須）
+  navigator.serviceWorker.register('./sw.js').catch(console.error);
+}
+
+let deferredPrompt = null;
+
+// Installガイドの表示/非表示を切り替える
+function showInstallUI(canPrompt) {
+  const btn   = document.getElementById('installBtn');   // 「アプリをダウンロード」ボタン
+  const guide = document.getElementById('installGuide'); // 案内テキストのコンテナ（下の例を参照）
+  if (btn)   btn.style.display   = canPrompt ? '' : 'none';
+  if (guide) guide.style.display = canPrompt ? 'none' : '';
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallUI(true);              // ダイアログを出せる → ボタンを出す
+});
+
+window.addEventListener('appinstalled', () => {
+  // インストール成功。次回以降はボタンを隠す
+  deferredPrompt = null;
+  localStorage.setItem('pwaInstalled', '1');
+  showInstallUI(false);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('installBtn');
+
+  // iOS/Safari は beforeinstallprompt が出ない → 最初から案内UI
+  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isiOS) showInstallUI(false);
+
+  // すでにインストール済みならボタン隠す
+  if (localStorage.getItem('pwaInstalled') === '1') showInstallUI(false);
+
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        // ★ 1回だけ使う。結果に関わらず破棄
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+
+        if (outcome !== 'accepted') {
+          // 拒否/閉じられた → 案内UIにフォールバック
+          showInstallUI(false);
+        }
+      } else {
+        // そもそもダイアログが出せない環境 → 案内UI
+        showInstallUI(false);
+      }
+    });
+  }
+});
+</script>
+
+  
 </body>
 </html>
 <script>(function(){var hud=document.getElementById('playtimeHud'); if(hud) hud.style.display='none';})();</script>
